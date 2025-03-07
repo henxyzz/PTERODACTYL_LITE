@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pterodactyl Panel - Cyberpunk Edition</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -18,33 +18,89 @@
   </header>
 
   <div class="container">
-    <div class="card" style="margin-top: 3rem; text-align: center;">
-      <h1 style="font-size: 3rem; margin-bottom: 1rem; color: var(--primary-color); text-shadow: 0 0 15px var(--primary-color);">
-        CYBER_PTERODACTYL
+    <div class="card" style="margin-top: 3rem; text-align: center; overflow: hidden; position: relative;">
+      <div style="position: absolute; top: -100px; right: -100px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(0, 255, 213, 0.1) 0%, transparent 70%); border-radius: 50%; z-index: 0;"></div>
+      <div style="position: absolute; bottom: -80px; left: -80px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(41, 121, 255, 0.1) 0%, transparent 70%); border-radius: 50%; z-index: 0;"></div>
+      
+      <h1 style="font-family: 'Orbitron', sans-serif; font-size: 3.5rem; margin-bottom: 1.5rem; position: relative; z-index: 1;">
+        <span style="background: linear-gradient(to right, var(--primary-color), var(--secondary-color), var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: 0 0 15px rgba(0, 255, 213, 0.5);">CYBER_PTERODACTYL</span>
+        <div style="width: 100px; height: 4px; background: linear-gradient(to right, var(--primary-color), var(--secondary-color)); margin: 10px auto; box-shadow: 0 0 10px var(--primary-color);"></div>
       </h1>
-      <p style="font-size: 1.2rem; margin-bottom: 2rem;">
-        Panel Game Server Dengan Tema Cyberpunk
+      
+      <p style="font-size: 1.3rem; margin-bottom: 2.5rem; color: #e0e7ff; letter-spacing: 1px; position: relative; z-index: 1;">
+        NEXT-GEN GAME SERVER MANAGEMENT PLATFORM
       </p>
-      <div style="margin-bottom: 2rem;">
-        <h2 style="color: var(--secondary-color); margin-bottom: 1rem;">Fitur Utama:</h2>
-        <ul style="list-style: none; padding: 0;">
-          <li>✓ Jalankan server Python</li>
-          <li>✓ Jalankan server NodeJS</li>
-          <li>✓ Jalankan server Bash</li>
-          <li>✓ Jalankan server Minecraft</li>
-          <li>✓ Pantau penggunaan CPU, RAM, dan Disk</li>
-          <li>✓ Kuota awal: 2GB Disk, 2GB RAM, dan 100% CPU</li>
-        </ul>
+      
+      <div style="margin-bottom: 3rem; position: relative; z-index: 1; max-width: 600px; margin-left: auto; margin-right: auto;">
+        <h2 style="font-family: 'Orbitron', sans-serif; color: var(--secondary-color); margin-bottom: 1.5rem; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px;">Fitur Utama</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: left;">
+          <div style="background: rgba(19, 26, 41, 0.6); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--primary-color); transition: all 0.3s ease;">
+            <h3 style="color: var(--primary-color); margin-bottom: 0.8rem; font-size: 1.2rem;">Aplikasi Server</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> Python Apps
+              </li>
+              <li style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> NodeJS Apps
+              </li>
+              <li style="display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> Bash Scripts
+              </li>
+            </ul>
+          </div>
+          
+          <div style="background: rgba(19, 26, 41, 0.6); padding: 1.5rem; border-radius: 8px; border-left: 3px solid var(--secondary-color); transition: all 0.3s ease;">
+            <h3 style="color: var(--secondary-color); margin-bottom: 0.8rem; font-size: 1.2rem;">Game Server</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> Minecraft Server
+              </li>
+              <li style="margin-bottom: 0.5rem; display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> Resource Management
+              </li>
+              <li style="display: flex; align-items: center;">
+                <span style="color: var(--success-color); margin-right: 0.5rem;">✓</span> One-Click Deployment
+              </li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="background: rgba(19, 26, 41, 0.8); padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; border: 1px solid rgba(0, 255, 213, 0.1);">
+          <h3 style="color: var(--accent-color); margin-bottom: 0.8rem; font-size: 1.2rem; text-align: center;">Default Resource Allocation</h3>
+          <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+            <div style="text-align: center; flex: 1;">
+              <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary-color);">2GB</div>
+              <div style="font-size: 0.9rem; color: #e0e7ff;">DISK</div>
+            </div>
+            <div style="text-align: center; flex: 1; border-left: 1px solid rgba(255, 255, 255, 0.1); border-right: 1px solid rgba(255, 255, 255, 0.1);">
+              <div style="font-size: 1.8rem; font-weight: 700; color: var(--secondary-color);">2GB</div>
+              <div style="font-size: 0.9rem; color: #e0e7ff;">RAM</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+              <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-color);">100%</div>
+              <div style="font-size: 0.9rem; color: #e0e7ff;">CPU</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <a href="/register" class="btn btn-primary" style="margin-right: 1rem;">Daftar Sekarang</a>
-        <a href="/login" class="btn">Login</a>
+      
+      <div style="position: relative; z-index: 1;">
+        <a href="/register" class="btn btn-primary" style="margin-right: 1.5rem; padding: 0.8rem 2rem; font-size: 1.1rem; letter-spacing: 1px;">
+          DAFTAR SEKARANG
+        </a>
+        <a href="/login" class="btn" style="padding: 0.8rem 2rem; font-size: 1.1rem; letter-spacing: 1px;">
+          LOGIN
+        </a>
       </div>
     </div>
   </div>
 
-  <footer style="text-align: center; padding: 2rem; margin-top: 3rem; font-size: 0.8rem;">
-    &copy; 2023 CYBER.PTERO - All Rights Reserved
+  <footer style="text-align: center; padding: 2rem; margin-top: 3rem; font-size: 0.9rem; color: rgba(224, 231, 255, 0.7);">
+    <div style="margin-bottom: 0.8rem;">
+      <span style="color: var(--primary-color);">&lt;/&gt;</span> CYBER.PTERO <span style="color: var(--primary-color);">&lt;/&gt;</span>
+    </div>
+    &copy; 2023 - All Rights Reserved
   </footer>
 </body>
 </html>
