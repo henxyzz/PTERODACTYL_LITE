@@ -8,6 +8,9 @@ const path = require('path');
 const { exec } = require('child_process');
 const fs = require('fs');
 const os = require('os');
+const AdmZip = require('adm-zip');
+const formidable = require('formidable');
+const FTP = require('node-ftp');
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -44,6 +47,10 @@ db.serialize(() => {
     cpu INTEGER,
     port INTEGER,
     status TEXT DEFAULT 'stopped',
+    ftp_host TEXT,
+    ftp_port INTEGER,
+    ftp_user TEXT,
+    ftp_password TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id)
   )`);
@@ -400,6 +407,456 @@ app.post('/admin/user/:id/quota', requireLogin, (req, res) => {
       res.redirect('/admin?success=true');
     }
   );
+});
+
+// File Management Routes
+// Upload File Route
+app.post('/servers/:id/upload', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    
+    const form = new formidable.IncomingForm();
+    form.uploadDir = serverDir;
+    form.keepExtensions = true;
+    
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        return res.json({ success: false, message: 'Gagal upload file' });
+      }
+      
+      const uploadedFile = files.file;
+      if (!uploadedFile) {
+        return res.json({ success: false, message: 'Tidak ada file yang diupload' });
+      }
+      
+      const newPath = path.join(serverDir, uploadedFile.originalFilename || uploadedFile.newFilename);
+      
+      try {
+        fs.renameSync(uploadedFile.filepath, newPath);
+        res.json({ success: true, message: 'File berhasil diupload', fileName: uploadedFile.originalFilename || uploadedFile.newFilename });
+      } catch (e) {
+        res.json({ success: false, message: 'Gagal memindahkan file upload', error: e.message });
+      }
+    });
+  });
+});
+
+// Unzip File Route
+app.post('/servers/:id/unzip', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { fileName } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const zipFilePath = path.join(serverDir, fileName);
+    
+    if (!fs.existsSync(zipFilePath)) {
+      return res.json({ success: false, message: 'File zip tidak ditemukan' });
+    }
+    
+    try {
+      const zip = new AdmZip(zipFilePath);
+      zip.extractAllTo(serverDir, true);
+      res.json({ success: true, message: 'File berhasil diekstrak' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal mengekstrak file zip', error: e.message });
+    }
+  });
+});
+
+// Copy File Route
+app.post('/servers/:id/copy', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { sourceFile, targetFile } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const sourcePath = path.join(serverDir, sourceFile);
+    const targetPath = path.join(serverDir, targetFile);
+    
+    if (!fs.existsSync(sourcePath)) {
+      return res.json({ success: false, message: 'File sumber tidak ditemukan' });
+    }
+    
+    try {
+      fs.copyFileSync(sourcePath, targetPath);
+      res.json({ success: true, message: 'File berhasil disalin' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal menyalin file', error: e.message });
+    }
+  });
+});
+
+// Rename File Route
+app.post('/servers/:id/rename', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { oldName, newName } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const oldPath = path.join(serverDir, oldName);
+    const newPath = path.join(serverDir, newName);
+    
+    if (!fs.existsSync(oldPath)) {
+      return res.json({ success: false, message: 'File tidak ditemukan' });
+    }
+    
+    try {
+      fs.renameSync(oldPath, newPath);
+      res.json({ success: true, message: 'File berhasil diubah nama' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal mengubah nama file', error: e.message });
+    }
+  });
+});
+
+// Edit File Content Route
+app.post('/servers/:id/edit', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { fileName, content } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const filePath = path.join(serverDir, fileName);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.json({ success: false, message: 'File tidak ditemukan' });
+    }
+    
+    try {
+      fs.writeFileSync(filePath, content);
+      res.json({ success: true, message: 'File berhasil diperbarui' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal mengupdate file', error: e.message });
+    }
+  });
+});
+
+// Get File Content Route
+app.get('/servers/:id/file', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { fileName } = req.query;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const filePath = path.join(serverDir, fileName);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.json({ success: false, message: 'File tidak ditemukan' });
+    }
+    
+    try {
+      const stats = fs.statSync(filePath);
+      
+      if (stats.isDirectory()) {
+        const files = fs.readdirSync(filePath).map(file => {
+          const fileStat = fs.statSync(path.join(filePath, file));
+          return {
+            name: file,
+            isDirectory: fileStat.isDirectory(),
+            size: fileStat.size,
+            modified: fileStat.mtime
+          };
+        });
+        
+        return res.json({ success: true, isDirectory: true, files });
+      }
+      
+      const content = fs.readFileSync(filePath, 'utf8');
+      res.json({ success: true, content, isDirectory: false });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal membaca file', error: e.message });
+    }
+  });
+});
+
+// List Files Route
+app.get('/servers/:id/files', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { dir } = req.query;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const targetDir = dir ? path.join(serverDir, dir) : serverDir;
+    
+    if (!fs.existsSync(targetDir)) {
+      return res.json({ success: false, message: 'Direktori tidak ditemukan' });
+    }
+    
+    try {
+      const files = fs.readdirSync(targetDir).map(file => {
+        const filePath = path.join(targetDir, file);
+        const stats = fs.statSync(filePath);
+        
+        return {
+          name: file,
+          isDirectory: stats.isDirectory(),
+          size: stats.size,
+          modified: stats.mtime
+        };
+      });
+      
+      res.json({ success: true, files });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal membaca direktori', error: e.message });
+    }
+  });
+});
+
+// FTP Configuration Routes
+// Save FTP Config
+app.post('/servers/:id/ftp/config', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { host, port, user, password } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    // Save FTP config to database
+    db.run('UPDATE servers SET ftp_host = ?, ftp_port = ?, ftp_user = ?, ftp_password = ? WHERE id = ?',
+      [host, port, user, password, serverId],
+      (err) => {
+        if (err) {
+          return res.json({ success: false, message: 'Gagal menyimpan konfigurasi FTP' });
+        }
+        
+        res.json({ success: true, message: 'Konfigurasi FTP berhasil disimpan' });
+      }
+    );
+  });
+});
+
+// Connect to FTP
+app.post('/servers/:id/ftp/connect', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    if (!server.ftp_host || !server.ftp_user || !server.ftp_password) {
+      return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
+    }
+    
+    const client = new FTP();
+    
+    client.on('ready', () => {
+      client.list((err, list) => {
+        if (err) {
+          client.end();
+          return res.json({ success: false, message: 'Gagal mendapatkan daftar file' });
+        }
+        
+        client.end();
+        res.json({ success: true, message: 'Berhasil terhubung ke FTP', files: list });
+      });
+    });
+    
+    client.on('error', (err) => {
+      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
+    });
+    
+    client.connect({
+      host: server.ftp_host,
+      port: server.ftp_port || 21,
+      user: server.ftp_user,
+      password: server.ftp_password
+    });
+  });
+});
+
+// Download from FTP
+app.post('/servers/:id/ftp/download', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { remotePath, localPath } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    if (!server.ftp_host || !server.ftp_user || !server.ftp_password) {
+      return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
+    }
+    
+    const client = new FTP();
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const targetPath = path.join(serverDir, localPath);
+    
+    client.on('ready', () => {
+      client.get(remotePath, (err, stream) => {
+        if (err) {
+          client.end();
+          return res.json({ success: false, message: 'Gagal mengunduh file', error: err.message });
+        }
+        
+        stream.pipe(fs.createWriteStream(targetPath));
+        
+        stream.once('close', () => {
+          client.end();
+          res.json({ success: true, message: 'File berhasil diunduh' });
+        });
+      });
+    });
+    
+    client.on('error', (err) => {
+      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
+    });
+    
+    client.connect({
+      host: server.ftp_host,
+      port: server.ftp_port || 21,
+      user: server.ftp_user,
+      password: server.ftp_password
+    });
+  });
+});
+
+// Upload to FTP
+app.post('/servers/:id/ftp/upload', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { localPath, remotePath } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    if (!server.ftp_host || !server.ftp_user || !server.ftp_password) {
+      return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
+    }
+    
+    const client = new FTP();
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const sourcePath = path.join(serverDir, localPath);
+    
+    if (!fs.existsSync(sourcePath)) {
+      return res.json({ success: false, message: 'File lokal tidak ditemukan' });
+    }
+    
+    client.on('ready', () => {
+      client.put(sourcePath, remotePath, (err) => {
+        client.end();
+        
+        if (err) {
+          return res.json({ success: false, message: 'Gagal mengupload file', error: err.message });
+        }
+        
+        res.json({ success: true, message: 'File berhasil diupload' });
+      });
+    });
+    
+    client.on('error', (err) => {
+      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
+    });
+    
+    client.connect({
+      host: server.ftp_host,
+      port: server.ftp_port || 21,
+      user: server.ftp_user,
+      password: server.ftp_password
+    });
+  });
+});
+
+// File Management Routes
+app.post('/servers/:id/delete-file', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { fileName } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const filePath = path.join(serverDir, fileName);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.json({ success: false, message: 'File tidak ditemukan' });
+    }
+    
+    try {
+      const stats = fs.statSync(filePath);
+      
+      if (stats.isDirectory()) {
+        fs.rmdirSync(filePath, { recursive: true });
+      } else {
+        fs.unlinkSync(filePath);
+      }
+      
+      res.json({ success: true, message: 'File berhasil dihapus' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal menghapus file', error: e.message });
+    }
+  });
+});
+
+app.post('/servers/:id/create-folder', requireLogin, (req, res) => {
+  const serverId = req.params.id;
+  const userId = req.session.userId;
+  const { folderPath } = req.body;
+
+  db.get('SELECT * FROM servers WHERE id = ? AND user_id = ?', [serverId, userId], (err, server) => {
+    if (err || !server) {
+      return res.json({ success: false, message: 'Server tidak ditemukan' });
+    }
+
+    const serverDir = path.join(__dirname, 'servers', `${serverId}`);
+    const targetPath = path.join(serverDir, folderPath);
+    
+    try {
+      fs.mkdirSync(targetPath, { recursive: true });
+      res.json({ success: true, message: 'Folder berhasil dibuat' });
+    } catch (e) {
+      res.json({ success: false, message: 'Gagal membuat folder', error: e.message });
+    }
+  });
 });
 
 // Start server

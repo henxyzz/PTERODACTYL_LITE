@@ -710,3 +710,300 @@ body::before {
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, var(--secondary-color), var(--primary-color));
 }
+
+/* File Manager Styles */
+.file-manager-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(10, 14, 23, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 213, 0.1);
+}
+
+.file-path-nav {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  color: var(--primary-color);
+  font-family: monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.file-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.icon {
+  display: inline-block;
+  font-size: 1.1rem;
+}
+
+.file-list {
+  border: 1px solid rgba(0, 255, 213, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.file-list-header {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr 1fr;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(90deg, rgba(10, 14, 23, 0.95), rgba(19, 26, 41, 0.8));
+  border-bottom: 1px solid rgba(0, 255, 213, 0.1);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.file-list-body {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: grid;
+  grid-template-columns: 2fr 0.5fr 1fr 1fr;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 255, 213, 0.05);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.file-item:hover {
+  background: rgba(0, 255, 213, 0.05);
+}
+
+.file-item.directory {
+  font-weight: 600;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-icon {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+}
+
+.file-size, .file-modified {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.file-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.file-action-btn {
+  padding: 0.15rem 0.3rem;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 255, 213, 0.2);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-action-btn:hover {
+  background: rgba(0, 255, 213, 0.1);
+  color: var(--primary-color);
+}
+
+.loading-files {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(0, 255, 213, 0.1);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  position: relative;
+  background: rgba(15, 20, 35, 0.95);
+  margin: 10% auto;
+  padding: 0;
+  width: 50%;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 255, 213, 0.2);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 255, 213, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h4 {
+  margin: 0;
+  color: var(--primary-color);
+}
+
+.close {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--primary-color);
+}
+
+.modal-body {
+  padding: 1rem;
+}
+
+.modal-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 255, 213, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.code-editor {
+  width: 100%;
+  height: 350px;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 255, 213, 0.1);
+  border-radius: 5px;
+  padding: 0.5rem;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tab-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(10, 14, 23, 0.5);
+  border: 1px solid rgba(0, 255, 213, 0.1);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(0, 255, 213, 0.1);
+  color: white;
+}
+
+.tab-btn.active {
+  background: rgba(0, 255, 213, 0.2);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.tab-content {
+  display: none;
+  padding: 1rem 0;
+}
+
+/* FTP Styles */
+.ftp-config {
+  background: rgba(10, 14, 23, 0.5);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(0, 255, 213, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ftp-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.ftp-status {
+  padding: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+
+.upload-progress {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+#upload-progress-text {
+  min-width: 40px;
+});
+}

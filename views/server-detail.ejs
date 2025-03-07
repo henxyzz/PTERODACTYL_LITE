@@ -98,52 +98,190 @@
       
       <div class="card" style="margin-top: 2rem;">
         <div class="card-header">
-          <h3>Files</h3>
-        </div>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-          <% if (server.egg_type === 'nodejs') { %>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>package.json</div>
-            </div>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>index.js</div>
-            </div>
-          <% } else if (server.egg_type === 'python') { %>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>main.py</div>
-            </div>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>requirements.txt</div>
-            </div>
-          <% } else if (server.egg_type === 'bash') { %>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>start.sh</div>
-            </div>
-          <% } else if (server.egg_type === 'minecraft') { %>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>eula.txt</div>
-            </div>
-            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
-              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
-              <div>server.properties</div>
-            </div>
-          <% } %>
-          <div class="card" style="width: 110px; text-align: center; padding: 0.5rem; border-style: dashed;">
-            <div style="font-size: 2rem; color: var(--secondary-color);">➕</div>
-            <div>Upload</div>
+          <h3>File Manager</h3>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('files-tab')">Files</button>
+            <button class="tab-btn" onclick="showTab('ftp-tab')">FTP</button>
           </div>
         </div>
         
-        <p style="font-size: 0.9rem; color: var(--secondary-color);">
-          File management is disabled in this demo version.
-        </p>
+        <div id="files-tab" class="tab-content" style="display: block;">
+          <div class="file-manager-controls">
+            <div class="file-path-nav">
+              <span id="current-path">/ (root)</span>
+            </div>
+            <div class="file-actions">
+              <button class="btn btn-sm" onclick="refreshFiles()">
+                <span class="icon">🔄</span> Refresh
+              </button>
+              <button class="btn btn-sm" onclick="showUploadModal()">
+                <span class="icon">⬆️</span> Upload
+              </button>
+              <button class="btn btn-sm" onclick="createNewFile()">
+                <span class="icon">📄</span> New File
+              </button>
+              <button class="btn btn-sm" onclick="createNewFolder()">
+                <span class="icon">📁</span> New Folder
+              </button>
+            </div>
+          </div>
+          
+          <div class="file-list" id="file-list">
+            <div class="file-list-header">
+              <div class="file-name">Name</div>
+              <div class="file-size">Size</div>
+              <div class="file-modified">Modified</div>
+              <div class="file-actions">Actions</div>
+            </div>
+            <div class="file-list-body" id="file-list-body">
+              <!-- File list will be loaded here via JavaScript -->
+              <div class="loading-files">
+                <div class="spinner"></div>
+                <p>Loading files...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div id="ftp-tab" class="tab-content">
+          <div class="ftp-config">
+            <h4>FTP Configuration</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Host</label>
+                <input type="text" id="ftp-host" class="form-control" placeholder="ftp.example.com" value="<%= server.ftp_host || '' %>">
+              </div>
+              <div class="form-group">
+                <label>Port</label>
+                <input type="number" id="ftp-port" class="form-control" placeholder="21" value="<%= server.ftp_port || '21' %>">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="ftp-user" class="form-control" placeholder="username" value="<%= server.ftp_user || '' %>">
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="ftp-password" class="form-control" placeholder="password" value="<%= server.ftp_password || '' %>">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="saveFtpConfig()">Save Configuration</button>
+              <button class="btn btn-success" onclick="testFtpConnection()">Test Connection</button>
+            </div>
+          </div>
+          
+          <div class="ftp-browser" style="margin-top: 2rem;">
+            <h4>FTP Browser</h4>
+            <div class="ftp-controls">
+              <button class="btn btn-sm" onclick="connectFtp()">
+                <span class="icon">🔗</span> Connect
+              </button>
+              <button class="btn btn-sm" onclick="uploadToFtp()">
+                <span class="icon">⬆️</span> Upload
+              </button>
+              <button class="btn btn-sm" onclick="refreshFtp()">
+                <span class="icon">🔄</span> Refresh
+              </button>
+            </div>
+            
+            <div class="ftp-file-list">
+              <div class="file-list-header">
+                <div class="file-name">Name</div>
+                <div class="file-size">Size</div>
+                <div class="file-type">Type</div>
+                <div class="file-actions">Actions</div>
+              </div>
+              <div class="file-list-body" id="ftp-file-list-body">
+                <p class="ftp-status">Not connected. Configure FTP settings and click Connect.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- File Upload Modal -->
+      <div id="upload-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4>Upload File</h4>
+            <span class="close" onclick="closeModal('upload-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="upload-form" enctype="multipart/form-data">
+              <div class="form-group">
+                <label>Select File</label>
+                <input type="file" name="file" id="file-upload" class="form-control">
+              </div>
+              <div class="upload-progress" style="display: none;">
+                <div class="progress">
+                  <div class="progress-bar" id="upload-progress-bar"></div>
+                </div>
+                <span id="upload-progress-text">0%</span>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="uploadFile()">Upload</button>
+            <button class="btn" onclick="closeModal('upload-modal')">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- File Edit Modal -->
+      <div id="edit-modal" class="modal">
+        <div class="modal-content" style="width: 90%; max-width: 1000px;">
+          <div class="modal-header">
+            <h4 id="edit-modal-title">Edit File</h4>
+            <span class="close" onclick="closeModal('edit-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <textarea id="file-editor" class="code-editor"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="saveFileEdit()">Save</button>
+            <button class="btn" onclick="closeModal('edit-modal')">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Unzip Modal -->
+      <div id="unzip-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4>Extract Archive</h4>
+            <span class="close" onclick="closeModal('unzip-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to extract <span id="zip-file-name"></span>?</p>
+            <p>Files will be extracted to the current directory.</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="confirmUnzip()">Extract</button>
+            <button class="btn" onclick="closeModal('unzip-modal')">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Rename Modal -->
+      <div id="rename-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h4>Rename File</h4>
+            <span class="close" onclick="closeModal('rename-modal')">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>New Name</label>
+              <input type="text" id="new-file-name" class="form-control">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" onclick="confirmRename()">Rename</button>
+            <button class="btn" onclick="closeModal('rename-modal')">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -180,6 +318,7 @@
   </style>
   
   <script src="/js/dashboard.js"></script>
+  <script src="/js/file-manager.js"></script>
   <script>
     // Simulasi log server
     const consoleElem = document.getElementById('console');
