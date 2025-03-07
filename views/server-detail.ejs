@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= server.name %> - Pterodactyl Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">CYBER.PTERO</div>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/servers/create">Create Server</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title"><%= server.name %></h2>
+        <span class="server-status <%= server.status === 'running' ? 'status-running' : 'status-stopped' %>" id="status-<%= server.id %>">
+          <%= server.status %>
+        </span>
+      </div>
+      
+      <div style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+          <div>
+            <p><strong>Type:</strong> <%= server.egg_type %></p>
+            <p><strong>Port:</strong> <%= server.port %></p>
+            <p><strong>Created:</strong> <%= new Date(server.created_at).toLocaleString() %></p>
+          </div>
+          
+          <div class="server-actions">
+            <% if (server.status === 'stopped') { %>
+              <button onclick="startServer(<%= server.id %>)" class="btn btn-success">Start</button>
+            <% } else { %>
+              <button onclick="stopServer(<%= server.id %>)" class="btn btn-danger">Stop</button>
+            <% } %>
+            
+            <button onclick="deleteServer(<%= server.id %>)" class="btn btn-danger">Delete</button>
+            <form id="delete-form-<%= server.id %>" action="/servers/<%= server.id %>/delete" method="POST" style="display: none;"></form>
+          </div>
+        </div>
+        
+        <div>
+          <h3 style="margin-bottom: 1rem; color: var(--secondary-color);">Resources</h3>
+          
+          <div class="form-group">
+            <label>Disk Space</label>
+            <div class="progress">
+              <div class="progress-bar progress-disk" style="width: <%= server.disk / 10 %>%"></div>
+            </div>
+            <small><%= server.disk %> MB</small>
+          </div>
+          
+          <div class="form-group">
+            <label>RAM</label>
+            <div class="progress">
+              <div class="progress-bar progress-ram" style="width: <%= server.ram / 10 %>%"></div>
+            </div>
+            <small><%= server.ram %> MB</small>
+          </div>
+          
+          <div class="form-group">
+            <label>CPU</label>
+            <div class="progress">
+              <div class="progress-bar progress-cpu" style="width: <%= server.cpu %>%"></div>
+            </div>
+            <small><%= server.cpu %>%</small>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>Console</h3>
+        </div>
+        
+        <div style="background-color: #0a0a1a; padding: 1rem; border-radius: 4px; font-family: monospace; height: 300px; overflow-y: auto; color: #00ff00; line-height: 1.4; margin-bottom: 1rem;" id="console">
+          > Server console ready
+          <% if (server.status === 'running') { %>
+          > Server is running on port <%= server.port %>
+          <% } else { %>
+          > Server is offline. Click "Start" to run the server.
+          <% } %>
+        </div>
+        
+        <div style="display: flex;">
+          <input type="text" id="console-input" class="form-control" placeholder="Enter command..." style="margin-right: 0.5rem;" disabled>
+          <button class="btn btn-primary" disabled>Send</button>
+        </div>
+      </div>
+      
+      <div class="card" style="margin-top: 2rem;">
+        <div class="card-header">
+          <h3>Files</h3>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+          <% if (server.egg_type === 'nodejs') { %>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>package.json</div>
+            </div>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>index.js</div>
+            </div>
+          <% } else if (server.egg_type === 'python') { %>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>main.py</div>
+            </div>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>requirements.txt</div>
+            </div>
+          <% } else if (server.egg_type === 'bash') { %>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>start.sh</div>
+            </div>
+          <% } else if (server.egg_type === 'minecraft') { %>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>eula.txt</div>
+            </div>
+            <div class="card" style="width: 110px; text-align: center; padding: 0.5rem;">
+              <div style="font-size: 2rem; color: var(--primary-color);">📄</div>
+              <div>server.properties</div>
+            </div>
+          <% } %>
+          <div class="card" style="width: 110px; text-align: center; padding: 0.5rem; border-style: dashed;">
+            <div style="font-size: 2rem; color: var(--secondary-color);">➕</div>
+            <div>Upload</div>
+          </div>
+        </div>
+        
+        <p style="font-size: 0.9rem; color: var(--secondary-color);">
+          File management is disabled in this demo version.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; padding: 2rem; margin-top: 3rem; font-size: 0.8rem;">
+    &copy; 2023 CYBER.PTERO - All Rights Reserved
+  </footer>
+
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 1rem;
+      border-radius: 4px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast-success {
+      border-left: 4px solid var(--success-color);
+    }
+    
+    .toast-error {
+      border-left: 4px solid var(--danger-color);
+    }
+  </style>
+  
+  <script src="/js/dashboard.js"></script>
+  <script>
+    // Simulasi log server
+    const consoleElem = document.getElementById('console');
+    const serverLogs = [
+      'Loading server configuration...',
+      'Checking dependencies...',
+      'Initializing server...',
+      'Server started successfully.',
+      'Listening on port <%= server.port %>',
+      'Ready for connections!'
+    ];
+    
+    function appendToConsole(message) {
+      const line = document.createElement('div');
+      line.textContent = `> ${message}`;
+      consoleElem.appendChild(line);
+      consoleElem.scrollTop = consoleElem.scrollHeight;
+    }
+    
+    if ('<%= server.status %>' === 'running') {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < serverLogs.length) {
+          appendToConsole(serverLogs[i]);
+          i++;
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

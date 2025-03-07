@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Pterodactyl Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="dashboard-page">
+    <header class="navbar">
+      <div class="logo">CYBER.PTERO</div>
+      <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/servers/create">Create Server</a>
+        <% if (user.id === 1) { %>
+          <a href="/admin">Admin</a>
+        <% } %>
+        <a href="/logout">Logout</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Dashboard</h2>
+          <span>Selamat datang, <%= user.username %></span>
+        </div>
+        
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-value"><%= user.disk_quota %> MB</div>
+            <div class="stat-label">Disk Quota</div>
+            <div class="progress">
+              <div class="progress-bar progress-disk" style="width: <%= (servers.reduce((sum, server) => sum + server.disk, 0) / user.disk_quota) * 100 %>%"></div>
+            </div>
+            <div class="stat-label">Terpakai: <%= servers.reduce((sum, server) => sum + server.disk, 0) %> MB</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value"><%= user.ram_quota %> MB</div>
+            <div class="stat-label">RAM Quota</div>
+            <div class="progress">
+              <div class="progress-bar progress-ram" style="width: <%= (servers.reduce((sum, server) => sum + server.ram, 0) / user.ram_quota) * 100 %>%"></div>
+            </div>
+            <div class="stat-label">Terpakai: <%= servers.reduce((sum, server) => sum + server.ram, 0) %> MB</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value"><%= user.cpu_quota %>%</div>
+            <div class="stat-label">CPU Quota</div>
+            <div class="progress">
+              <div class="progress-bar progress-cpu" style="width: <%= (servers.reduce((sum, server) => sum + server.cpu, 0) / user.cpu_quota) * 100 %>%"></div>
+            </div>
+            <div class="stat-label">Terpakai: <%= servers.reduce((sum, server) => sum + server.cpu, 0) %>%</div>
+          </div>
+        </div>
+        
+        <div class="card-header">
+          <h3>System Resources</h3>
+        </div>
+        
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-value" id="cpu-usage"><%= systemInfo.cpuUsage %>%</div>
+            <div class="stat-label">CPU Usage</div>
+            <div class="progress">
+              <div class="progress-bar progress-cpu" id="cpu-bar" style="width: <%= systemInfo.cpuUsage %>%"></div>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-value" id="ram-usage"><%= systemInfo.usedMem %> MB</div>
+            <div class="stat-label">RAM Usage</div>
+            <div class="progress">
+              <div class="progress-bar progress-ram" id="ram-bar" style="width: <%= (systemInfo.usedMem / systemInfo.totalMem) * 100 %>%"></div>
+            </div>
+            <div class="stat-label">Total: <%= systemInfo.totalMem %> MB</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Servers</h2>
+          <a href="/servers/create" class="btn btn-primary">Create Server</a>
+        </div>
+        
+        <% if (servers.length === 0) { %>
+          <p>Anda belum memiliki server. Klik tombol "Create Server" untuk membuat server baru.</p>
+        <% } else { %>
+          <div class="grid">
+            <% servers.forEach(function(server) { %>
+              <div class="server-card">
+                <div class="server-header">
+                  <h3 class="server-name"><%= server.name %></h3>
+                  <span class="server-status <%= server.status === 'running' ? 'status-running' : 'status-stopped' %>" id="status-<%= server.id %>">
+                    <%= server.status %>
+                  </span>
+                </div>
+                
+                <div>
+                  <p><strong>Type:</strong> <%= server.egg_type %></p>
+                  <p><strong>Port:</strong> <%= server.port %></p>
+                  <p><strong>Resources:</strong></p>
+                  <div class="progress">
+                    <div class="progress-bar progress-disk" style="width: <%= (server.disk / user.disk_quota) * 100 %>%"></div>
+                  </div>
+                  <small>Disk: <%= server.disk %> MB</small>
+                  
+                  <div class="progress">
+                    <div class="progress-bar progress-ram" style="width: <%= (server.ram / user.ram_quota) * 100 %>%"></div>
+                  </div>
+                  <small>RAM: <%= server.ram %> MB</small>
+                  
+                  <div class="progress">
+                    <div class="progress-bar progress-cpu" style="width: <%= (server.cpu / user.cpu_quota) * 100 %>%"></div>
+                  </div>
+                  <small>CPU: <%= server.cpu %>%</small>
+                </div>
+                
+                <div class="server-actions">
+                  <a href="/servers/<%= server.id %>" class="btn">Manage</a>
+                  
+                  <% if (server.status === 'stopped') { %>
+                    <button onclick="startServer(<%= server.id %>)" class="btn btn-success">Start</button>
+                  <% } else { %>
+                    <button onclick="stopServer(<%= server.id %>)" class="btn btn-danger">Stop</button>
+                  <% } %>
+                  
+                  <button onclick="deleteServer(<%= server.id %>)" class="btn btn-danger">Delete</button>
+                  <form id="delete-form-<%= server.id %>" action="/servers/<%= server.id %>/delete" method="POST" style="display: none;"></form>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <footer style="text-align: center; padding: 2rem; margin-top: 3rem; font-size: 0.8rem;">
+      &copy; 2023 CYBER.PTERO - All Rights Reserved
+    </footer>
+  </div>
+  
+  <style>
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 1rem;
+      border-radius: 4px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast-success {
+      border-left: 4px solid var(--success-color);
+    }
+    
+    .toast-error {
+      border-left: 4px solid var(--danger-color);
+    }
+  </style>
+  
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

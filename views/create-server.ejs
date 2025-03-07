@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Server - Pterodactyl Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo">CYBER.PTERO</div>
+    <div class="nav-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/servers/create">Create Server</a>
+      <% if (user.id === 1) { %>
+        <a href="/admin">Admin</a>
+      <% } %>
+      <a href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Create New Server</h2>
+      </div>
+      
+      <% if (error) { %>
+        <div class="alert alert-danger">
+          <%= error %>
+        </div>
+      <% } %>
+      
+      <form action="/servers/create" method="POST">
+        <div class="form-group">
+          <label for="name" class="form-label">Server Name</label>
+          <input type="text" id="name" name="name" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="egg_type" class="form-label">Server Type</label>
+          <select id="egg_type" name="egg_type" class="form-control" required>
+            <option value="">-- Pilih Tipe Server --</option>
+            <option value="nodejs">NodeJS</option>
+            <option value="python">Python</option>
+            <option value="bash">Bash</option>
+            <option value="minecraft">Minecraft Server</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="port" class="form-label">Port</label>
+          <input type="number" id="port" name="port" class="form-control" min="1024" max="65535" required>
+          <small style="color: var(--secondary-color);">Port harus antara 1024-65535</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="disk" class="form-label">Disk Space (MB)</label>
+          <input type="range" id="disk" name="disk" min="256" max="<%= user.disk_quota %>" value="512" class="form-control" oninput="document.getElementById('diskValue').textContent = this.value">
+          <div>Selected: <span id="diskValue">512</span> MB (Max: <%= user.disk_quota %> MB)</div>
+          <div class="progress">
+            <div class="progress-bar progress-disk" id="disk-bar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="ram" class="form-label">RAM (MB)</label>
+          <input type="range" id="ram" name="ram" min="128" max="<%= user.ram_quota %>" value="256" class="form-control" oninput="document.getElementById('ramValue').textContent = this.value">
+          <div>Selected: <span id="ramValue">256</span> MB (Max: <%= user.ram_quota %> MB)</div>
+          <div class="progress">
+            <div class="progress-bar progress-ram" id="ram-bar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="cpu" class="form-label">CPU (%)</label>
+          <input type="range" id="cpu" name="cpu" min="10" max="<%= user.cpu_quota %>" value="50" class="form-control" oninput="document.getElementById('cpuValue').textContent = this.value">
+          <div>Selected: <span id="cpuValue">50</span>% (Max: <%= user.cpu_quota %>%)</div>
+          <div class="progress">
+            <div class="progress-bar progress-cpu" id="cpu-bar" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Create Server</button>
+        <a href="/dashboard" class="btn">Cancel</a>
+      </form>
+    </div>
+  </div>
+
+  <footer style="text-align: center; padding: 2rem; margin-top: 3rem; font-size: 0.8rem;">
+    &copy; 2023 CYBER.PTERO - All Rights Reserved
+  </footer>
+
+  <script>
+    // Update progress bars
+    const diskSlider = document.getElementById('disk');
+    const ramSlider = document.getElementById('ram');
+    const cpuSlider = document.getElementById('cpu');
+    
+    const diskBar = document.getElementById('disk-bar');
+    const ramBar = document.getElementById('ram-bar');
+    const cpuBar = document.getElementById('cpu-bar');
+    
+    const maxDisk = <%= user.disk_quota %>;
+    const maxRam = <%= user.ram_quota %>;
+    const maxCpu = <%= user.cpu_quota %>;
+    
+    function updateBars() {
+      diskBar.style.width = `${(diskSlider.value / maxDisk) * 100}%`;
+      ramBar.style.width = `${(ramSlider.value / maxRam) * 100}%`;
+      cpuBar.style.width = `${(cpuSlider.value / maxCpu) * 100}%`;
+    }
+    
+    diskSlider.addEventListener('input', updateBars);
+    ramSlider.addEventListener('input', updateBars);
+    cpuSlider.addEventListener('input', updateBars);
+    
+    // Initial update
+    updateBars();
+  </script>
+</body>
+</html>

@@ -13,3 +13,29 @@
     "@types/node": "^18.0.6"
   }
 }
+{
+  "name": "pterodactyl-panel",
+  "version": "1.0.0",
+  "description": "Panel server pterodactyl sederhana",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "install-deps": "npm install"
+  },
+  "keywords": [
+    "pterodactyl",
+    "panel",
+    "server"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^18.0.6",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "ejs": "^3.1.9",
+    "sqlite3": "^5.1.6",
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.2"
+  }
+}
