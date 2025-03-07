@@ -10,7 +10,7 @@ const fs = require('fs');
 const os = require('os');
 const AdmZip = require('adm-zip');
 const formidable = require('formidable');
-const FTP = require('node-ftp');
+const { Client: FTPClient } = require('basic-ftp');
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -680,30 +680,27 @@ app.post('/servers/:id/ftp/connect', requireLogin, (req, res) => {
       return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
     }
     
-    const client = new FTP();
+    const client = new FTPClient();
     
-    client.on('ready', () => {
-      client.list((err, list) => {
-        if (err) {
-          client.end();
-          return res.json({ success: false, message: 'Gagal mendapatkan daftar file' });
-        }
+    async function connectAndList() {
+      try {
+        await client.access({
+          host: server.ftp_host,
+          port: server.ftp_port || 21,
+          user: server.ftp_user,
+          password: server.ftp_password
+        });
         
-        client.end();
+        const list = await client.list();
+        client.close();
         res.json({ success: true, message: 'Berhasil terhubung ke FTP', files: list });
-      });
-    });
+      } catch (err) {
+        client.close();
+        res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
+      }
+    }
     
-    client.on('error', (err) => {
-      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
-    });
-    
-    client.connect({
-      host: server.ftp_host,
-      port: server.ftp_port || 21,
-      user: server.ftp_user,
-      password: server.ftp_password
-    });
+    connectAndList();
   });
 });
 
@@ -722,36 +719,29 @@ app.post('/servers/:id/ftp/download', requireLogin, (req, res) => {
       return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
     }
     
-    const client = new FTP();
+    const client = new FTPClient();
     const serverDir = path.join(__dirname, 'servers', `${serverId}`);
     const targetPath = path.join(serverDir, localPath);
     
-    client.on('ready', () => {
-      client.get(remotePath, (err, stream) => {
-        if (err) {
-          client.end();
-          return res.json({ success: false, message: 'Gagal mengunduh file', error: err.message });
-        }
-        
-        stream.pipe(fs.createWriteStream(targetPath));
-        
-        stream.once('close', () => {
-          client.end();
-          res.json({ success: true, message: 'File berhasil diunduh' });
+    async function downloadFile() {
+      try {
+        await client.access({
+          host: server.ftp_host,
+          port: server.ftp_port || 21,
+          user: server.ftp_user,
+          password: server.ftp_password
         });
-      });
-    });
+        
+        await client.downloadTo(fs.createWriteStream(targetPath), remotePath);
+        client.close();
+        res.json({ success: true, message: 'File berhasil diunduh' });
+      } catch (err) {
+        client.close();
+        res.json({ success: false, message: 'Gagal mengunduh file', error: err.message });
+      }
+    }
     
-    client.on('error', (err) => {
-      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
-    });
-    
-    client.connect({
-      host: server.ftp_host,
-      port: server.ftp_port || 21,
-      user: server.ftp_user,
-      password: server.ftp_password
-    });
+    downloadFile();
   });
 });
 
@@ -770,7 +760,7 @@ app.post('/servers/:id/ftp/upload', requireLogin, (req, res) => {
       return res.json({ success: false, message: 'Konfigurasi FTP belum lengkap' });
     }
     
-    const client = new FTP();
+    const client = new FTPClient();
     const serverDir = path.join(__dirname, 'servers', `${serverId}`);
     const sourcePath = path.join(serverDir, localPath);
     
@@ -778,28 +768,25 @@ app.post('/servers/:id/ftp/upload', requireLogin, (req, res) => {
       return res.json({ success: false, message: 'File lokal tidak ditemukan' });
     }
     
-    client.on('ready', () => {
-      client.put(sourcePath, remotePath, (err) => {
-        client.end();
+    async function uploadFile() {
+      try {
+        await client.access({
+          host: server.ftp_host,
+          port: server.ftp_port || 21,
+          user: server.ftp_user,
+          password: server.ftp_password
+        });
         
-        if (err) {
-          return res.json({ success: false, message: 'Gagal mengupload file', error: err.message });
-        }
-        
+        await client.uploadFrom(sourcePath, remotePath);
+        client.close();
         res.json({ success: true, message: 'File berhasil diupload' });
-      });
-    });
+      } catch (err) {
+        client.close();
+        res.json({ success: false, message: 'Gagal mengupload file', error: err.message });
+      }
+    }
     
-    client.on('error', (err) => {
-      return res.json({ success: false, message: 'Gagal terhubung ke FTP', error: err.message });
-    });
-    
-    client.connect({
-      host: server.ftp_host,
-      port: server.ftp_port || 21,
-      user: server.ftp_user,
-      password: server.ftp_password
-    });
+    uploadFile();
   });
 });
 
